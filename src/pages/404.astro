@@ -1,0 +1,13 @@
+---
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+import { url } from "../utils/url-utils";
+---
+<MainGridLayout title="找不到这一页" noindex>
+  <section class="card-base empty-state">
+    <p class="eyebrow">404 · LOST AT SEA</p>
+    <h1 class="text-3xl font-bold mt-4">这一页游到别处了</h1>
+    <p>链接可能已失效，或文章已经搬家。从文章探索重新出发吧。</p>
+    <div class="flex gap-3 justify-center"><a class="tool-button" href={url("/")}>返回首页</a><a class="tool-button" href={url("/archive/")}>探索文章 →</a></div>
+  </section>
+</MainGridLayout>
+

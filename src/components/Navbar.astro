@@ -1,0 +1,110 @@
+---
+import { Icon } from "astro-icon/components";
+import { navBarConfig, siteConfig } from "../config";
+import { LinkPresets } from "../constants/link-presets";
+import type { NavBarLink } from "../types/config";
+import { url } from "../utils/url-utils";
+import LightDarkSwitch from "./LightDarkSwitch.svelte";
+import Search from "./Search.svelte";
+import DisplaySettings from "./widget/DisplaySettings.svelte";
+import MusicPlayer from "./widget/MusicPlayer.svelte";
+
+const links: NavBarLink[] = navBarConfig.links.map((item) =>
+	typeof item === "number" ? LinkPresets[item] : item,
+);
+---
+<div id="navbar" class="z-50 onload-animation">
+  <div class="max-w-[var(--page-width)] h-[3.9rem] mx-auto flex items-center justify-between pl-4 pr-2.5 md:pl-6 gap-3 navbar-shell">
+    <a href={url("/")} class="brand-link" aria-label="Zebrafish 首页"><strong>{siteConfig.title}</strong><small>digital garden</small></a>
+    <nav class="primary-nav desktop-nav" aria-label="主要导航">
+      {links.map(link => <a class="nav-link" href={link.external ? link.url : url(link.url)} target={link.external ? "_blank" : undefined} rel={link.external ? "noopener noreferrer" : undefined}>{link.name}{link.external && <span aria-hidden="true"> ↗</span>}</a>)}
+    </nav>
+    <div class="flex items-center nav-actions">
+      <Search client:load/>
+      <span class="nav-actions-pill">
+        {!siteConfig.themeColor.fixed && <button aria-label="调整主题色彩" aria-expanded="false" aria-controls="display-setting" class="btn-plain rounded-lg h-10 w-10" id="display-settings-switch"><Icon name="material-symbols:palette-outline" class="text-[1.15rem]"/></button>}
+        <LightDarkSwitch client:load label="切换色彩模式"/>
+        <MusicPlayer client:load/>
+      </span>
+      <button aria-label="开启导航菜单" aria-expanded="false" aria-controls="nav-menu-panel" class="btn-plain rounded-lg w-10 h-10 lg:!hidden" id="nav-menu-switch"><Icon name="material-symbols:menu-rounded" class="text-[1.15rem]"/></button>
+    </div>
+    <nav id="nav-menu-panel" aria-label="行動版导航" class="primary-nav mobile-nav float-panel float-panel-closed" inert>
+      <div class="mobile-nav-head"><span>EXPLORE</span><small>{siteConfig.title}</small></div>
+      {links.map(link => <a class="nav-link" href={link.external ? link.url : url(link.url)} target={link.external ? "_blank" : undefined} rel={link.external ? "noopener noreferrer" : undefined}>{link.name}<span aria-hidden="true">{link.external ? "↗" : "→"}</span></a>)}
+    </nav>
+    <DisplaySettings client:only="svelte"/>
+  </div>
+</div>
+<script>
+function setPanel(id: string, buttonId: string, open: boolean) {
+  const panel = document.getElementById(id);
+  panel?.classList.toggle("float-panel-closed", !open);
+  if (panel) panel.inert = !open;
+  document.getElementById(buttonId)?.setAttribute("aria-expanded", String(open));
+}
+function closePanels() {
+  setPanel("nav-menu-panel", "nav-menu-switch", false);
+  setPanel("display-setting", "display-settings-switch", false);
+}
+for (const [buttonId, panelId] of [["nav-menu-switch", "nav-menu-panel"], ["display-settings-switch", "display-setting"]]) {
+  document.getElementById(buttonId)?.addEventListener("click", () => {
+    const open = document.getElementById(buttonId)?.getAttribute("aria-expanded") !== "true";
+    closePanels(); setPanel(panelId, buttonId, open);
+  });
+}
+document.addEventListener("click", event => {
+  if (!(event.target instanceof Element)) return;
+  if (!event.target.closest("#nav-menu-panel, #nav-menu-switch, #display-setting, #display-settings-switch")) closePanels();
+  if (event.target.closest("#nav-menu-panel a")) closePanels();
+});
+document.addEventListener("keydown", event => {
+  if (event.key !== "Escape") return;
+  const active = document.querySelector<HTMLButtonElement>('#navbar button[aria-expanded="true"]');
+  closePanels(); active?.focus();
+});
+function updateNavigation() {
+  const current = new URL(location.href);
+  document.querySelectorAll<HTMLAnchorElement>(".primary-nav a").forEach(link => {
+    const target = new URL(link.href);
+    const selected = target.origin === current.origin && target.pathname.replace(/\/$/, "") === current.pathname.replace(/\/$/, "") && (target.searchParams.get("saved") === "true") === (current.searchParams.get("saved") === "true");
+    if (selected) link.setAttribute("aria-current", "page"); else link.removeAttribute("aria-current");
+  });
+  closePanels();
+}
+updateNavigation();
+window.addEventListener("popstate", updateNavigation);
+window.addEventListener("zebrafish:navigation", updateNavigation);
+document.addEventListener("swup:page:view", updateNavigation);
+</script>
+<style>
+#navbar { padding-top: 1.5rem; }
+.navbar-shell {
+  position: relative; border-radius: var(--radius-large);
+  background: color-mix(in oklch, var(--card-bg) 78%, transparent);
+  backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--hairline);
+}
+.brand-link { display:flex; align-items:baseline; gap:.85rem; color:var(--ink); flex-shrink:0; }
+.brand-link strong { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 1.6rem; line-height: 1; letter-spacing: -.01em; }
+.brand-link small { font-family: var(--font-mono); color:var(--ink-soft); font-size:.55rem; font-weight:500; letter-spacing:.24em; text-transform:uppercase; padding-left:.85rem; border-left:1px solid var(--hairline-strong); }
+.desktop-nav { display:none; align-items:center; gap:.35rem; margin-left:auto; margin-right:1.1rem; }
+.primary-nav a { position:relative; font-size:.8rem; font-weight:500; letter-spacing:.04em; border-radius:999px; color:var(--ink-soft); padding:.6rem .95rem; transition: color .25s ease, background .25s ease; }
+.desktop-nav a::after { content:""; position:absolute; left:.95rem; right:.95rem; bottom:.38rem; height:1px; background:currentColor; opacity:0; transform:scaleX(0); transition: transform .3s ease, opacity .3s ease; }
+.primary-nav a:hover { color:var(--ink); background:var(--btn-regular-bg); }
+.primary-nav a[aria-current="page"] { color:var(--btn-content); background:var(--btn-regular-bg); box-shadow:none; }
+.desktop-nav a[aria-current="page"]::after { transform:scaleX(1); opacity:.45; }
+.nav-actions { gap:.7rem; }
+.nav-actions-pill { display:flex; align-items:center; gap:.3rem; padding:.25rem; border-radius:999px; border:1px solid var(--hairline); background: color-mix(in oklch, var(--card-bg) 55%, transparent); }
+.nav-actions :global(.btn-plain) { border-radius:999px !important; color: var(--ink-soft); }
+.nav-actions :global(.btn-plain:hover), .nav-actions :global(.btn-plain[aria-pressed="true"]) { background: var(--btn-regular-bg); color: var(--primary); }
+.mobile-nav { position:absolute; top:4.6rem; right:0; min-width:17rem; padding:.5rem; border:1px solid var(--hairline-strong); }
+.mobile-nav-head { display:flex; align-items:baseline; justify-content:space-between; padding:.6rem .8rem .75rem; border-bottom:1px solid var(--hairline); color:var(--ink-soft); font-family: var(--font-mono); font-size:.58rem; font-weight:500; letter-spacing:.26em; }
+.mobile-nav-head small { color:var(--ink); font-family: var(--font-display); font-style: italic; font-size:1.1rem; letter-spacing:0; font-weight:400; }
+.mobile-nav a { display:flex; justify-content:space-between; gap:2rem; padding:.85rem .8rem; border-bottom:1px solid var(--hairline); border-radius:.8rem; font-size:.9rem; }
+.mobile-nav a:last-child { border-bottom:0; }
+.mobile-nav a span { color:var(--ink-soft); }
+.mobile-nav a:hover { background:var(--btn-regular-bg); }
+@media(min-width:1024px) { .desktop-nav {display:flex;} .mobile-nav {display:none;} }
+@media(max-width:767px) { #navbar { padding: 1rem .5rem 0; } .brand-link small {display:none;} .nav-actions-pill {border:0; background:transparent; box-shadow:none; padding:0;} }
+@media(max-width:374px) { .brand-link strong {font-size:1.35rem;} .mobile-nav {min-width:calc(100vw - 1rem);} }
+</style>

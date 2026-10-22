@@ -1,0 +1,15 @@
+---
+interface Props {
+	badge?: string;
+	url?: string;
+	label?: string;
+}
+const { badge, url, label } = Astro.props;
+---
+<a href={url} aria-label={label} class="button-link">
+    <span class="button-link-name"><slot></slot></span>
+    { badge !== undefined && badge !== null && badge !== '' && <>
+        <span class="button-link-leader" aria-hidden="true"></span>
+        <span class="button-link-count">{ badge.padStart(2, "0") }</span>
+    </>}
+</a>

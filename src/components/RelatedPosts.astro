@@ -1,0 +1,26 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getSortedPosts } from "../utils/content-utils";
+import { getPostUrlBySlug } from "../utils/url-utils";
+
+const { entry } = Astro.props as { entry: CollectionEntry<"posts"> };
+const posts = await getSortedPosts();
+const related = posts
+	.filter((post) => post.slug !== entry.slug && !post.data.draft)
+	.map((post) => ({
+		post,
+		score:
+			(entry.data.category && post.data.category === entry.data.category
+				? 2
+				: 0) +
+			post.data.tags.filter((tag) => entry.data.tags.includes(tag)).length,
+	}))
+	.filter((item) => item.score > 0)
+	.sort((a, b) => b.score - a.score)
+	.slice(0, 3);
+---
+{related.length > 0 && <section class="card-base related-posts" aria-labelledby="related-title" data-pagefind-ignore>
+  <p class="eyebrow">KEEP EXPLORING</p><h2 id="related-title">延伸阅读</h2>
+  {related.map(({post}) => <a href={getPostUrlBySlug(post.slug)}><span>{post.data.title}</span><small>{post.data.category || "文章"} ↗</small></a>)}
+</section>}
+

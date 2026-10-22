@@ -1,0 +1,73 @@
+---
+import type { CollectionEntry } from "astro:content";
+import path from "node:path";
+import { Icon } from "astro-icon/components";
+import I18nKey from "../i18n/i18nKey";
+import { i18n } from "../i18n/translation";
+import { formatDateToYYYYMMDD } from "../utils/date-utils";
+import { getCategoryUrl, getDir, getTagUrl } from "../utils/url-utils";
+import BookmarkButton from "./BookmarkButton.svelte";
+import ImageWrapper from "./misc/ImageWrapper.astro";
+
+interface Props {
+	class?: string;
+	entry: CollectionEntry<"posts">;
+	title: string;
+	url: string;
+	published: Date;
+	tags: string[];
+	category: string | null;
+	image: string;
+	description: string;
+	style: string;
+}
+const {
+	entry,
+	title,
+	url,
+	published,
+	tags,
+	category,
+	image,
+	description,
+	style,
+} = Astro.props;
+const className = Astro.props.class;
+
+const hasCover = !!image;
+
+const { remarkPluginFrontmatter } = await entry.render();
+
+const categoryLabel = category || i18n(I18nKey.uncategorized);
+---
+<article class:list={["post-card", className]} style={style}>
+    <div class="post-card-body">
+        <div class="post-card-kicker">
+            <span class="post-index" aria-hidden="true"></span>
+            <a href={getCategoryUrl(category)}>{categoryLabel}</a>
+            <time datetime={published.toISOString()}>{formatDateToYYYYMMDD(published)}</time>
+        </div>
+
+        <h2 class="post-card-title"><a href={url}>{title}</a></h2>
+
+        <p class="post-card-excerpt">{ description || remarkPluginFrontmatter.excerpt }</p>
+
+        <div class="post-card-bottom">
+            {tags && tags.length > 0 && <div class="post-card-tags">
+                {tags.map(tag => <a href={getTagUrl(tag)}>#{tag.trim()}</a>)}
+            </div>}
+            <span class="post-card-stats">
+                {remarkPluginFrontmatter.words} {i18n(remarkPluginFrontmatter.words === 1 ? I18nKey.wordCount : I18nKey.wordsCount)}
+                <i aria-hidden="true">·</i>
+                {remarkPluginFrontmatter.minutes} {i18n(remarkPluginFrontmatter.minutes === 1 ? I18nKey.minuteCount : I18nKey.minutesCount)}
+            </span>
+            <BookmarkButton slug={entry.slug} title={title} client:load />
+        </div>
+    </div>
+
+    {hasCover ? <a href={url} aria-label={title} tabindex="-1" class="post-card-cover">
+        <ImageWrapper src={image} basePath={path.join("content/posts/", getDir(entry.id))} alt="" class="w-full h-full"/>
+    </a> : <a href={url} aria-label={title} tabindex="-1" class="post-card-enter">
+        <Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true"/>
+    </a>}
+</article>

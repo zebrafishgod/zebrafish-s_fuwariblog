@@ -1,0 +1,17 @@
+---
+import { licenseConfig, profileConfig, siteConfig } from "../config";
+import { url } from "../utils/url-utils";
+---
+<footer class="site-footer">
+  <div>
+    <p class="footer-sign">{siteConfig.title}</p>
+    <p class="footer-tagline">{siteConfig.subtitle}</p>
+  </div>
+  <div class="footer-meta">
+    <nav aria-label="页脚导航"><a href={url("/archive/")}>归档</a><a href={url("/about/")}>关于</a><a href={url("/sitemap-index.xml")}>网站地图</a></nav>
+    <div>© {new Date().getFullYear()} {profileConfig.name}
+      {licenseConfig.enable && <span> · 文章授权 <a href={licenseConfig.url} target="_blank" rel="noopener noreferrer">{licenseConfig.name}</a></span>}
+      <span> · Built with <a href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a> &amp; <a href="https://github.com/saicaca/fuwari" target="_blank" rel="noopener noreferrer">Fuwari</a></span>
+    </div>
+  </div>
+</footer>

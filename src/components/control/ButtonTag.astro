@@ -1,0 +1,28 @@
+---
+interface Props {
+	dot?: boolean;
+	href?: string;
+	label?: string;
+}
+const { dot, href, label } = Astro.props;
+---
+<a href={href} aria-label={label} class="tag-chip">
+    {dot && <i class="tag-chip-dot" aria-hidden="true"></i>}
+    <slot></slot>
+</a>
+
+<style>
+	/* A dot here used to be a `bg-[var(--btn-content)]` square: near-black on
+	   light, near-white on dark — both far too loud at 1px, and the only reason
+	   the dark variant needed its own colour override. The accent is the same
+	   weight at either end and reads as a bullet rather than a glitch. */
+	.tag-chip-dot {
+		display: block;
+		width: 0.25rem;
+		height: 0.25rem;
+		margin-right: 0.4rem;
+		border-radius: 50%;
+		background: var(--primary);
+		flex: none;
+	}
+</style>

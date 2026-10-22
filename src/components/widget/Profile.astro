@@ -1,0 +1,17 @@
+---
+import { Icon } from "astro-icon/components";
+import { profileConfig as config } from "../../config";
+import { url } from "../../utils/url-utils";
+import ImageWrapper from "../misc/ImageWrapper.astro";
+---
+<aside class="card-base profile-card" aria-label="关于作者">
+  <a class="profile-avatar" aria-label="认识 Zebrafish" href={url("/about/")}>
+    <ImageWrapper src={config.avatar || ""} alt={config.name + " 的头像"} class="w-full h-full"/>
+  </a>
+  <h2>{config.name}</h2>
+  <div class="profile-caption">Stay curious · Keep exploring</div>
+  <p>{config.bio}</p>
+  <nav class="profile-socials" aria-label="作者链接">
+    {config.links.map(item => <a href={item.url.startsWith("/") ? url(item.url) : item.url} aria-label={item.name} title={item.name} target={item.url.startsWith("/") ? undefined : "_blank"} rel={item.url.startsWith("/") ? undefined : "me noopener noreferrer"}><Icon name={item.icon} class="text-base"/><span>{item.name}</span></a>)}
+  </nav>
+</aside>
